@@ -9,7 +9,6 @@ import { Label } from './ui/label';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
 import { Alert, AlertDescription } from './ui/alert';
-import { toast } from 'sonner';
 import { convertHTMLtoJSX } from '../utils/htmlToJsx';
 import ExplanationPanel from './ExplanationPanel';
 import DiffViewer from './DiffViewer';
@@ -26,7 +25,6 @@ const HTMLtoJSXConverter = () => {
 
   const handleConvert = useCallback(() => {
     if (!htmlInput.trim()) {
-      toast.error('Please enter some HTML to convert');
       return;
     }
 
@@ -39,9 +37,7 @@ const HTMLtoJSXConverter = () => {
         setJsxOutput(result.jsx);
         setExplanations(result.explanations);
         setErrors(result.errors);
-        toast.success('Conversion completed!');
       } catch (error) {
-        toast.error('Conversion failed: ' + error.message);
         setErrors([{ type: 'error', message: error.message }]);
       } finally {
         setIsConverting(false);
@@ -52,10 +48,8 @@ const HTMLtoJSXConverter = () => {
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(jsxOutput);
     setCopied(true);
-    toast.success('Copied to clipboard!');
     setTimeout(() => setCopied(false), 2000);
   }, [jsxOutput]);
-
 
   // Auto-convert on input change (debounced)
   useEffect(() => {
@@ -71,8 +65,7 @@ const HTMLtoJSXConverter = () => {
     }, 500);
 
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [htmlInput, wrapInComponent]);
+  }, [htmlInput, wrapInComponent, handleConvert]);
 
   const editorOptions = {
     minimap: { enabled: false },
@@ -175,7 +168,6 @@ const HTMLtoJSXConverter = () => {
                   {copied ? 'Copied!' : 'Copy'}
                 </Button>
               )}
-              <Badge variant="secondary">Read-only</Badge>
             </div>
           </div>
           

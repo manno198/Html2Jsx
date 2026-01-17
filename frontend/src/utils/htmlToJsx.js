@@ -1,9 +1,4 @@
-import * as parser from '@babel/parser';
-import traverse from '@babel/traverse';
-import generate from '@babel/generator';
-import * as t from '@babel/types';
 import { parseDocument } from 'htmlparser2';
-import { DomHandler } from 'htmlparser2';
 
 /**
  * Convert HTML to JSX with detailed explanations
@@ -18,7 +13,6 @@ export const convertHTMLtoJSX = (html, wrapInComponent = false) => {
 
   try {
     // Parse HTML
-    const handler = new DomHandler();
     const domParser = parseDocument(html, { 
       lowerCaseAttributeNames: false,
       recognizeSelfClosing: true 
@@ -134,15 +128,6 @@ const processElement = (element, explanations, errors, warnings) => {
   const selfClosingTags = ['img', 'br', 'hr', 'input', 'meta', 'link', 'area', 'base', 'col', 'embed', 'param', 'source', 'track', 'wbr'];
   
   if (selfClosingTags.includes(tagName) && children.length === 0) {
-    if (!element.attribs) {
-      explanations.push({
-        type: 'transformation',
-        title: 'Self-Closing Tag',
-        description: `Converted <${tagName}> to self-closing <${tagName} /> for JSX compatibility.`,
-        before: `<${tagName}>`,
-        after: `<${tagName} />`
-      });
-    }
     return `<${tagName}${attrsString} />`;
   }
 
@@ -155,9 +140,8 @@ const processElement = (element, explanations, errors, warnings) => {
 /**
  * Convert HTML attribute to JSX attribute
  */
-const convertAttribute = (key, value, tagName, explanations) => {
+const convertAttribute = (key, value, _tagName, explanations) => {
   const originalKey = key;
-  const originalValue = value;
 
   // class -> className
   if (key === 'class') {
@@ -185,6 +169,13 @@ const convertAttribute = (key, value, tagName, explanations) => {
 
   // Convert style attribute to JSX object with proper formatting
   if (key === 'style' && typeof value === 'string') {
+    // Guard: Check if value is already a JSX expression (starts and ends with {})
+    const trimmedValue = value.trim();
+    if (trimmedValue.startsWith('{') && trimmedValue.endsWith('}')) {
+      // Already a JSX expression, return as-is without wrapping
+      return `style={${trimmedValue}}`;
+    }
+    
     const styleObject = parseStyleString(value);
     
     // Format style object for JSX with unquoted keys
@@ -270,15 +261,9 @@ const parseStyleString = (styleString) => {
       // Convert kebab-case to camelCase for JavaScript object keys
       const camelProperty = property.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
       
-      // Remove quotes from values if present and use proper JavaScript string syntax
-      let cleanValue = value.replace(/^["']|["']$/g, '');
-      
-      // Add quotes for string values (not numbers)
-      if (isNaN(cleanValue) && !cleanValue.match(/^(true|false|null|undefined)$/)) {
-        styleObject[camelProperty] = cleanValue;
-      } else {
-        styleObject[camelProperty] = cleanValue;
-      }
+      // Remove quotes from values if present
+      const cleanValue = value.replace(/^["']|["']$/g, '');
+      styleObject[camelProperty] = cleanValue;
     }
   });
 
@@ -287,6 +272,7 @@ const parseStyleString = (styleString) => {
 
 /**
  * Format style object for JSX with proper JavaScript syntax
+ * Returns the object content without outer braces (they're added in convertAttribute)
  */
 const formatStyleObject = (styleObj) => {
   if (Object.keys(styleObj).length === 0) {
@@ -299,7 +285,8 @@ const formatStyleObject = (styleObj) => {
     return `${key}: "${value}"`;
   });
   
-  return `{{ ${entries.join(', ')} }}`;
+  // Return single braces - convertAttribute will wrap with style={...}
+  return `{ ${entries.join(', ')} }`;
 };
 
 /**
