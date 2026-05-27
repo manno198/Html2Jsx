@@ -1,5 +1,5 @@
-# HTML to JSX Converter
-html2-jsx.vercel.app
+# HTML to JSX Converter ([html2-jsx.vercel.ap](https://html2-jsx.vercel.app/))
+
 A production-quality developer tool that converts HTML and basic JavaScript into valid React JSX, with detailed explanations for each transformation. Built as a learning and migration assistant for developers moving from HTML/JS to React.
 
 ![HTML to JSX Converter](https://img.shields.io/badge/React-19.0-blue) ![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue) ![Monaco Editor](https://img.shields.io/badge/Monaco-VS_Code_Editor-blue)
